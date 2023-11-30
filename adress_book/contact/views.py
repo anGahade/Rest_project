@@ -1,54 +1,33 @@
-from django.http import Http404
-from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.viewsets import ModelViewSet
 
-from contact.models import Contact
-from contact.serializers import ContactSerializer
+from contact.models import Contact, ContactGroup, Events
+from contact.serializers import ContactSerializer, ContactGroupSerializer, EventSerializer
+from rest_framework import filters
 
 
-class ContactList(APIView):
-    """
-    List all contacts, or create a new contact.
-    """
-    def get(self, request, format=None):
-        contacts = Contact.objects.all()
-        serializer = ContactSerializer(contacts, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class ContactViewSet(ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['first_name', 'last_name']
+    # permission_classes = [IsAuthenticated]
 
-    def post(self, request, format=None):
-        serializer = ContactSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ContactDetailView(APIView):
-    """
-        Retrieve, update or delete a contact instance.
-        """
-    def get_object(self, pk):
-        try:
-            return Contact.objects.get(pk=pk)
-        except Contact.DoesNotExist:
-            raise Http404
+class ContactGroupViewSet(ModelViewSet):
+    queryset = ContactGroup.objects.prefetch_related('contacts').all()
+    serializer_class = ContactGroupSerializer
 
-    def get(self, request, pk, format=None):
-        contact = self.get_object(pk)
-        serializer = ContactSerializer(contact)
-        return Response(serializer.data)
 
-    def put(self, request, pk, format=None):
-        contact = self.get_object(pk)
-        serializer = ContactSerializer(contact, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class EventViewSet(ModelViewSet):
+    queryset = Events.objects.prefetch_related('contacts').all()
+    serializer_class = EventSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['location', 'title']
 
-    def delete(self, request, pk, format=None):
-        contact = self.get_object(pk)
-        contact.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 

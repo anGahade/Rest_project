@@ -1,7 +1,13 @@
-from contact.views import ContactList, ContactDetailView
+from contact.views import ContactViewSet, ContactGroupViewSet, EventViewSet
+from rest_framework.routers import DefaultRouter
 from django.urls import path
 
-urlpatterns = [
-    path('', ContactList.as_view(), name='contact_list'),
-    path('/detail/<int:pk>/', ContactDetailView.as_view())
-]
+router = DefaultRouter()
+router.register('contact', ContactViewSet, basename='contact')
+router.register('contact-group', ContactGroupViewSet, basename='contact_group')
+router.register('events', EventViewSet, basename='event')
+
+
+urlpatterns = router.urls
+
+
